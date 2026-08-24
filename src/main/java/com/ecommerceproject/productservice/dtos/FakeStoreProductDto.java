@@ -12,15 +12,20 @@ public class FakeStoreProductDto {
     private String title;
     private BigDecimal price;
     private String description;
-    private String Category;
+    private String category;
     private String imageUrl;
 
 }
-//{
-//        "id": 0,
-//        "title": "string",
-//        "price": 0.1,
-//        "description": "string",
-//        "category": "string",
-//        "image": "http://example.com"
-//}
+/*
+
+Schema : Fakestore API
+{
+        "id": 0,
+        "title": "string",
+        "price": 0.1,
+        "description": "string",
+        "category": "string",
+        "image": "http://example.com"
+}
+
+*/

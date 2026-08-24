@@ -1,7 +1,9 @@
 package com.ecommerceproject.productservice.services;
 
+import com.ecommerceproject.productservice.dtos.ProductRequestDto;
+import com.ecommerceproject.productservice.dtos.CreateProductResponseDto;
 import com.ecommerceproject.productservice.dtos.FakeStoreProductDto;
-import com.ecommerceproject.productservice.models.Category;
+import com.ecommerceproject.productservice.dtos.GetProductResponseDto;
 import com.ecommerceproject.productservice.models.Product;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -20,7 +22,7 @@ public class FakeStoreProductService implements ProductService{
     }
 
     @Override
-    public Product getProductById(Long productId) {
+    public GetProductResponseDto getProductById(Long productId) {
         ResponseEntity<FakeStoreProductDto> response = restTemplate.getForEntity(
                 "https://fakestoreapi.com/products/" + productId,
                 FakeStoreProductDto.class
@@ -31,14 +33,14 @@ public class FakeStoreProductService implements ProductService{
     }
 
     @Override
-    public List<Product> getAllProducts() {
+    public List<GetProductResponseDto> getAllProducts() {
 
         ResponseEntity<FakeStoreProductDto[]> responseEntity = restTemplate.getForEntity(
                 "https://fakestoreapi.com/products",
                 FakeStoreProductDto[].class
         );
 
-        List<Product> products = new ArrayList<>();
+        List<GetProductResponseDto> products = new ArrayList<>();
         for(FakeStoreProductDto productDto : responseEntity.getBody()){
             products.add(from(productDto));
         }
@@ -46,13 +48,13 @@ public class FakeStoreProductService implements ProductService{
     }
 
     @Override
-    public Product createProduct(Product product) {
+    public CreateProductResponseDto createProduct(ProductRequestDto productRequestDto) {
         return null;
     }
 
     @Override
-    public Product updateProductById(Product product, Long productId) {
-        return null;
+    public void updateProductById(ProductRequestDto product, Long productId) {
+        return ;
     }
 
     @Override
@@ -60,20 +62,15 @@ public class FakeStoreProductService implements ProductService{
 
     }
 
-    private Product from(FakeStoreProductDto fakeStoreProductDto) {
+    private GetProductResponseDto from(FakeStoreProductDto fakeStoreProductDto) {
         if(fakeStoreProductDto != null) {
-            Product product = new Product();
-            product.setId(fakeStoreProductDto.getId());
+            GetProductResponseDto product = new GetProductResponseDto();
             product.setTitle(fakeStoreProductDto.getTitle());
             product.setPrice(fakeStoreProductDto.getPrice());
             product.setDescription(fakeStoreProductDto.getDescription());
             //product.setQty(FakeStoreProductDto.);
             product.setImageUrl(fakeStoreProductDto.getImageUrl());
-
-            Category category = new Category();
-            category.setTitle(fakeStoreProductDto.getCategory());
-            product.setCategory(category);
-
+            product.setCategoryName(fakeStoreProductDto.getCategory());
             return product;
         }
         return null;
