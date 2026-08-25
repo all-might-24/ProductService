@@ -12,10 +12,4 @@ import org.springframework.stereotype.Repository;
 public interface ProductRepository extends
         JpaRepository<Product, Long>,
         JpaSpecificationExecutor<Product> {
-
-    Page<Product> findAll(Specification<Product> specification,  Pageable pageable);
-
-    Page<Product> findByIsDeletedFalse(Pageable pageable);
-
-    Page<Product> findByIsDeletedFalseAndTitleContainingIgnoreCase(String search, Pageable pageable);
 }

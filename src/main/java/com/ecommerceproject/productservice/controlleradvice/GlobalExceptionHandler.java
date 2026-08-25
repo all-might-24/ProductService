@@ -2,6 +2,8 @@ package com.ecommerceproject.productservice.controlleradvice;
 
 import com.ecommerceproject.productservice.dtos.ExceptionDto;
 import com.ecommerceproject.productservice.exceptions.CategoryNotFoundException;
+import com.ecommerceproject.productservice.exceptions.InvalidProductRequestException;
+import com.ecommerceproject.productservice.exceptions.InvalidSortFieldException;
 import com.ecommerceproject.productservice.exceptions.ProductNotFoundException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
@@ -81,6 +83,24 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ExceptionDto> handleConstraintViolationException(ConstraintViolationException e) {
         int status = HttpStatus.BAD_REQUEST.value();
         ExceptionDto dto = createExceptionDto(status, "Invalid Request Parameters");
+        return ResponseEntity
+                .status(status)
+                .body(dto);
+    }
+
+    @ExceptionHandler(InvalidSortFieldException.class)
+    public ResponseEntity<ExceptionDto> handleInvalidSortFieldException(InvalidSortFieldException e) {
+        int status = HttpStatus.BAD_REQUEST.value();
+        ExceptionDto dto = createExceptionDto(status, e.getMessage());
+        return ResponseEntity
+                .status(status)
+                .body(dto);
+    }
+
+    @ExceptionHandler(InvalidProductRequestException.class)
+    public ResponseEntity<ExceptionDto> handleInvalidProductRequestException(InvalidProductRequestException e) {
+        int status = HttpStatus.BAD_REQUEST.value();
+        ExceptionDto dto = createExceptionDto(status, e.getMessage());
         return ResponseEntity
                 .status(status)
                 .body(dto);

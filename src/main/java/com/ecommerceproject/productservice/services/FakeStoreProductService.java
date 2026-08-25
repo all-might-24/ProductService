@@ -7,6 +7,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -31,7 +33,7 @@ public class FakeStoreProductService implements ProductService{
     }
 
     @Override
-    public Page<GetProductResponseDto> getAllProducts(String search, Pageable pageable) {
+    public PageResponseDto<GetProductResponseDto> getAllProducts(String search, Long categoryId, BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable) {
         return null;
     }
 

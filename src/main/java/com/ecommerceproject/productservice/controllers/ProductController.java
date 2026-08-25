@@ -2,6 +2,7 @@ package com.ecommerceproject.productservice.controllers;
 
 import com.ecommerceproject.productservice.dtos.*;
 import com.ecommerceproject.productservice.services.ProductService;
+import com.ecommerceproject.productservice.validators.ProductRequestValidator;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.data.domain.Page;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 @RestController
@@ -40,9 +42,14 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<Page<GetProductResponseDto>> getAllProduct(@RequestParam(required = false) String search,
+    public ResponseEntity<PageResponseDto<GetProductResponseDto>> getAllProduct(@RequestParam(required = false) String search,
+                                                                     @RequestParam(required = false) Long categoryId,
+                                                                     @RequestParam(required = false) BigDecimal minPrice,
+                                                                     @RequestParam(required = false) BigDecimal maxPrice,
                                                                      Pageable pageable) {
-        Page<GetProductResponseDto> products = productService.getAllProducts(search, pageable);
+        ProductRequestValidator.validate(minPrice, maxPrice, pageable);
+
+        PageResponseDto<GetProductResponseDto> products = productService.getAllProducts(search, categoryId, minPrice, maxPrice, pageable);
         return ResponseEntity
                 .ok()
                 .body(products);

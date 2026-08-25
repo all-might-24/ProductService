@@ -2,18 +2,26 @@ package com.ecommerceproject.productservice.services;
 
 import com.ecommerceproject.productservice.dtos.*;
 import com.ecommerceproject.productservice.exceptions.CategoryNotFoundException;
+import com.ecommerceproject.productservice.exceptions.InvalidSortFieldException;
 import com.ecommerceproject.productservice.exceptions.ProductNotFoundException;
 import com.ecommerceproject.productservice.mapper.ProductMapper;
 import com.ecommerceproject.productservice.models.Category;
 import com.ecommerceproject.productservice.models.Product;
 import com.ecommerceproject.productservice.repositories.CategoryRepository;
 import com.ecommerceproject.productservice.repositories.ProductRepository;
+import com.ecommerceproject.productservice.specifications.ProductSpecifications;
+import com.ecommerceproject.productservice.utilities.GlobalVariables;
 import org.springframework.data.domain.Page;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 
 import org.springframework.data.domain.Pageable;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
+
+import static com.ecommerceproject.productservice.utilities.GlobalVariables.VALID_PRODUCT_SORT_FIELDS;
 
 @Service
 public class ProductStorageService implements ProductService{
@@ -81,18 +89,44 @@ public class ProductStorageService implements ProductService{
     }
 
     @Override
-    public Page<GetProductResponseDto> getAllProducts(String search, Pageable pageable) {
-        Page<Product> products;
+    public PageResponseDto<GetProductResponseDto> getAllProducts(String search,
+                                                      Long categoryId,
+                                                      BigDecimal minPrice,
+                                                      BigDecimal maxPrice,
+                                                      Pageable pageable) {
+        validateSortingFields(pageable);
+
+        Specification<Product> specification = ProductSpecifications.isNotDeleted();
 
         if(search != null && !search.isBlank()) {
-            products = productRepository
-                    .findByIsDeletedFalseAndTitleContainingIgnoreCase(search.trim(), pageable);
-        } else {
-            products = productRepository
-                    .findByIsDeletedFalse(pageable);
+            specification = specification.and(ProductSpecifications.containsTitle(search.trim()));
         }
 
-        return products.map(productMapper::toGetProductResponseDto);
+        if (categoryId != null) {
+            specification = specification.and(ProductSpecifications.hasCategoryId(categoryId));
+        }
+
+        if(minPrice != null) {
+            specification = specification.and(ProductSpecifications.priceGreaterThanOrEqualTo(minPrice));
+        }
+
+        if(maxPrice != null) {
+            specification = specification.and(ProductSpecifications.priceLesserThanOrEqualTo(maxPrice));
+        }
+        Page<Product> products = productRepository.findAll(specification, pageable);
+
+        Page<GetProductResponseDto> productsDto = products.map(productMapper::toGetProductResponseDto);
+
+        return PageResponseDto.from(productsDto);
+
+    }
+
+    private void validateSortingFields(Pageable pageable) {
+        pageable.getSort().forEach( order -> {
+            if (!GlobalVariables.VALID_PRODUCT_SORT_FIELDS.contains(order.getProperty())) {
+                throw new InvalidSortFieldException("Sorting by "+ order.getProperty() +" is not allowed");
+            }
+        });
     }
 
     @Override
@@ -166,4 +200,6 @@ public class ProductStorageService implements ProductService{
         product.setDeleted(true);
         productRepository.save(product);
     }
+
+
 }
