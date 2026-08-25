@@ -53,7 +53,7 @@ public class ProductStorageService implements ProductService{
 
         Optional<Category> optionalCategory = categoryRepository.findById(createProductRequestDto.getCategoryId());
         if(optionalCategory.isEmpty()) {
-            throw new CategoryNotFoundException("Category not found");
+            throw new CategoryNotFoundException("Category not found with id : " + createProductRequestDto.getCategoryId());
         }
         product.setCategory(optionalCategory.get());
 
@@ -65,7 +65,7 @@ public class ProductStorageService implements ProductService{
         Optional<Product> optionalProduct = productRepository.findById(id);
 
         if (optionalProduct.isEmpty() || optionalProduct.get().isDeleted()) {
-            throw new ProductNotFoundException("Product not found");
+            throw new ProductNotFoundException("Product not found with id : " + id);
         }
 
         return optionalProduct.get();
