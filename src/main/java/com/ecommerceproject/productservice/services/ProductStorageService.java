@@ -8,8 +8,10 @@ import com.ecommerceproject.productservice.models.Category;
 import com.ecommerceproject.productservice.models.Product;
 import com.ecommerceproject.productservice.repositories.CategoryRepository;
 import com.ecommerceproject.productservice.repositories.ProductRepository;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import org.springframework.data.domain.Pageable;
 import java.util.List;
 import java.util.Optional;
 
@@ -79,15 +81,18 @@ public class ProductStorageService implements ProductService{
     }
 
     @Override
-    public List<GetProductResponseDto> getAllProducts() {
+    public Page<GetProductResponseDto> getAllProducts(String search, Pageable pageable) {
+        Page<Product> products;
 
-        List<Product> products = productRepository.findAll();
+        if(search != null && !search.isBlank()) {
+            products = productRepository
+                    .findByIsDeletedFalseAndTitleContainingIgnoreCase(search.trim(), pageable);
+        } else {
+            products = productRepository
+                    .findByIsDeletedFalse(pageable);
+        }
 
-        return products
-                .stream()
-                .filter(product -> !product.isDeleted())
-                .map(productMapper::toGetProductResponseDto)
-                .toList();
+        return products.map(productMapper::toGetProductResponseDto);
     }
 
     @Override

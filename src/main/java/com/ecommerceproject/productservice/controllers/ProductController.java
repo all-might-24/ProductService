@@ -4,6 +4,8 @@ import com.ecommerceproject.productservice.dtos.*;
 import com.ecommerceproject.productservice.services.ProductService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -38,8 +40,9 @@ public class ProductController {
     }
 
     @GetMapping
-    public ResponseEntity<List<GetProductResponseDto>> getAllProduct() {
-        List<GetProductResponseDto> products = productService.getAllProducts();
+    public ResponseEntity<Page<GetProductResponseDto>> getAllProduct(@RequestParam(required = false) String search,
+                                                                     Pageable pageable) {
+        Page<GetProductResponseDto> products = productService.getAllProducts(search, pageable);
         return ResponseEntity
                 .ok()
                 .body(products);

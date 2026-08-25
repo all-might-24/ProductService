@@ -1,10 +1,12 @@
 package com.ecommerceproject.productservice.services;
 
 import com.ecommerceproject.productservice.dtos.*;
+import org.springframework.data.domain.Page;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.data.domain.Pageable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +31,10 @@ public class FakeStoreProductService implements ProductService{
     }
 
     @Override
+    public Page<GetProductResponseDto> getAllProducts(String search, Pageable pageable) {
+        return null;
+    }
+
     public List<GetProductResponseDto> getAllProducts() {
 
         ResponseEntity<FakeStoreProductDto[]> responseEntity = restTemplate.getForEntity(
