@@ -1,10 +1,8 @@
 package com.ecommerceproject.productservice.controllers;
 
-import com.ecommerceproject.productservice.dtos.ProductRequestDto;
-import com.ecommerceproject.productservice.dtos.CreateProductResponseDto;
-import com.ecommerceproject.productservice.dtos.GetProductResponseDto;
-import com.ecommerceproject.productservice.models.Product;
+import com.ecommerceproject.productservice.dtos.*;
 import com.ecommerceproject.productservice.services.ProductService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,8 +21,8 @@ public class ProductController {
     }
 
     @PostMapping
-    public ResponseEntity<CreateProductResponseDto> createProduct(@RequestBody ProductRequestDto productRequestDto) {
-        CreateProductResponseDto createProductResponseDto = productService.createProduct(productRequestDto);
+    public ResponseEntity<CreateProductResponseDto> createProduct( @Valid @RequestBody CreateProductRequestDto createProductRequestDto) {
+        CreateProductResponseDto createProductResponseDto = productService.createProduct(createProductRequestDto);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(createProductResponseDto);
@@ -49,8 +47,36 @@ public class ProductController {
 
     @PutMapping("/{product_id}")
     public ResponseEntity<Void> updateProduct(@PathVariable("product_id") Long productId,
-                                              @RequestBody ProductRequestDto productRequestDto) {
+                                              @Valid @RequestBody UpdateProductRequestDto productRequestDto) {
         productService.updateProductById(productRequestDto, productId);
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @PatchMapping("/{product_id}")
+    public ResponseEntity<Void> updateProductFields(@PathVariable("product_id") Long productId,
+                                                    @Valid @RequestBody PatchProductRequestDto productRequestDto) {
+        productService.updateProductFieldsById(productRequestDto, productId);
+
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @DeleteMapping("/{product_id}/hard-delete")
+    public ResponseEntity<Void> deleteProduct(@PathVariable("product_id") Long productId) {
+        productService.deleteProductById(productId);
+
+        return ResponseEntity
+                .noContent()
+                .build();
+    }
+
+    @DeleteMapping("/{product_id}")
+    public ResponseEntity<Void> softDeleteProduct(@PathVariable("product_id") Long productId) {
+        productService.softDeleteProductById(productId);
+
         return ResponseEntity
                 .noContent()
                 .build();

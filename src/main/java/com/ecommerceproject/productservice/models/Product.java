@@ -17,7 +17,7 @@ public class Product extends BaseEntity{
     private Integer qty;
     private BigDecimal price;
     private String imageUrl;
-
+    private boolean isDeleted = false;
     @ManyToOne
     private Category category;
 }

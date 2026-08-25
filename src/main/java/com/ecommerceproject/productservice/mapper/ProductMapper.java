@@ -5,7 +5,6 @@ import com.ecommerceproject.productservice.dtos.GetProductResponseDto;
 import com.ecommerceproject.productservice.models.Product;
 import org.springframework.stereotype.Component;
 
-import java.math.BigDecimal;
 
 @Component
 public class ProductMapper {
@@ -13,13 +12,14 @@ public class ProductMapper {
     public CreateProductResponseDto toCreateProductResponseDto(Product product) {
         CreateProductResponseDto createProductResponseDto = new CreateProductResponseDto();
         createProductResponseDto.setId(product.getId());
-        createProductResponseDto.setProductName(product.getTitle());
+        createProductResponseDto.setTitle(product.getTitle());
         return createProductResponseDto;
     }
 
     public GetProductResponseDto toGetProductResponseDto(Product product) {
         GetProductResponseDto getProductResponseDto = new GetProductResponseDto();
 
+        getProductResponseDto.setId(product.getId());
         getProductResponseDto.setTitle(product.getTitle());
         getProductResponseDto.setPrice(product.getPrice());
         getProductResponseDto.setDescription(product.getDescription());

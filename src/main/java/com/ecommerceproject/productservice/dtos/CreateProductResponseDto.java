@@ -7,5 +7,5 @@ import lombok.Setter;
 @Setter
 public class CreateProductResponseDto {
     private Long id;
-    private String productName;
+    private String title;
 }

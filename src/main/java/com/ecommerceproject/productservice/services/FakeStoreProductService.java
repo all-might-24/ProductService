@@ -1,10 +1,6 @@
 package com.ecommerceproject.productservice.services;
 
-import com.ecommerceproject.productservice.dtos.ProductRequestDto;
-import com.ecommerceproject.productservice.dtos.CreateProductResponseDto;
-import com.ecommerceproject.productservice.dtos.FakeStoreProductDto;
-import com.ecommerceproject.productservice.dtos.GetProductResponseDto;
-import com.ecommerceproject.productservice.models.Product;
+import com.ecommerceproject.productservice.dtos.*;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -48,17 +44,27 @@ public class FakeStoreProductService implements ProductService{
     }
 
     @Override
-    public CreateProductResponseDto createProduct(ProductRequestDto productRequestDto) {
+    public CreateProductResponseDto createProduct(CreateProductRequestDto createProductRequestDto) {
         return null;
     }
 
     @Override
-    public void updateProductById(ProductRequestDto product, Long productId) {
+    public void updateProductById(UpdateProductRequestDto product, Long productId) {
         return ;
     }
 
     @Override
+    public void updateProductFieldsById(PatchProductRequestDto product, Long productId) {
+
+    }
+
+    @Override
     public void deleteProductById(Long productId) {
+
+    }
+
+    @Override
+    public void softDeleteProductById(Long productId) {
 
     }
 
