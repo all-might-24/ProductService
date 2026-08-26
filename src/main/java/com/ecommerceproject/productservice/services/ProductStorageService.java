@@ -11,6 +11,7 @@ import com.ecommerceproject.productservice.repositories.CategoryRepository;
 import com.ecommerceproject.productservice.repositories.ProductRepository;
 import com.ecommerceproject.productservice.specifications.ProductSpecifications;
 import com.ecommerceproject.productservice.utilities.GlobalVariables;
+import jakarta.transaction.Transactional;
 import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
@@ -27,19 +28,20 @@ import static com.ecommerceproject.productservice.utilities.GlobalVariables.VALI
 public class ProductStorageService implements ProductService{
 
     private final ProductRepository productRepository;
-    private final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
     private final ProductMapper productMapper;
 
 
     public ProductStorageService(ProductRepository productRepository,
                                  ProductMapper productMapper,
-                                 CategoryRepository categoryRepository) {
+                                 CategoryService categoryService) {
         this.productRepository = productRepository;
         this.productMapper = productMapper;
-        this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
     }
 
     @Override
+    @Transactional
     public CreateProductResponseDto createProduct(CreateProductRequestDto createProductRequestDto) {
 
         Product product = new Product();
@@ -61,11 +63,9 @@ public class ProductStorageService implements ProductService{
 //            product.setCategory(optionalCategory.get());
 //        }
 
-        Optional<Category> optionalCategory = categoryRepository.findById(createProductRequestDto.getCategoryId());
-        if(optionalCategory.isEmpty()) {
-            throw new CategoryNotFoundException("Category not found with id : " + createProductRequestDto.getCategoryId());
-        }
-        product.setCategory(optionalCategory.get());
+        Category category = categoryService.findCategoryById(createProductRequestDto.getCategoryId());
+
+        product.setCategory(category);
 
         return productMapper.toCreateProductResponseDto(productRepository.save(product));
 
@@ -130,6 +130,7 @@ public class ProductStorageService implements ProductService{
     }
 
     @Override
+    @Transactional
     public void updateProductById(UpdateProductRequestDto productRequestDto, Long productId) {
 
         Product product = findProductById(productId);
@@ -138,11 +139,8 @@ public class ProductStorageService implements ProductService{
         product.setDescription(productRequestDto.getDescription());
         product.setPrice(productRequestDto.getPrice());
 
-        Optional<Category> optionalCategory = categoryRepository.findById(productRequestDto.getCategoryId());
-        if(optionalCategory.isEmpty()) {
-            throw new CategoryNotFoundException("Category not found");
-        }
-        product.setCategory(optionalCategory.get());
+        Category category = categoryService.findCategoryById(productRequestDto.getCategoryId());
+        product.setCategory(category);
 
         product.setQty(productRequestDto.getQty());
         product.setImageUrl(productRequestDto.getImageUrl());
@@ -152,6 +150,7 @@ public class ProductStorageService implements ProductService{
     }
 
     @Override
+    @Transactional
     public void updateProductFieldsById(PatchProductRequestDto productRequestDto, Long productId) {
 
         Product product = findProductById(productId);
@@ -169,11 +168,8 @@ public class ProductStorageService implements ProductService{
         }
 
         if (productRequestDto.getCategoryId() != null) {
-            Optional<Category> optionalCategory = categoryRepository.findById(productRequestDto.getCategoryId());
-            if(optionalCategory.isEmpty()) {
-                throw new CategoryNotFoundException("Category not found");
-            }
-            product.setCategory(optionalCategory.get());
+            Category category = categoryService.findCategoryById(productRequestDto.getCategoryId());
+            product.setCategory(category);
         }
 
         if (productRequestDto.getQty() != null) {
@@ -194,6 +190,7 @@ public class ProductStorageService implements ProductService{
     }
 
     @Override
+    @Transactional
     public void softDeleteProductById(Long productId) {
 
         Product product = findProductById(productId);

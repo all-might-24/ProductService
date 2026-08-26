@@ -1,10 +1,7 @@
 package com.ecommerceproject.productservice.controlleradvice;
 
 import com.ecommerceproject.productservice.dtos.ExceptionDto;
-import com.ecommerceproject.productservice.exceptions.CategoryNotFoundException;
-import com.ecommerceproject.productservice.exceptions.InvalidProductRequestException;
-import com.ecommerceproject.productservice.exceptions.InvalidSortFieldException;
-import com.ecommerceproject.productservice.exceptions.ProductNotFoundException;
+import com.ecommerceproject.productservice.exceptions.*;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -99,6 +96,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(InvalidProductRequestException.class)
     public ResponseEntity<ExceptionDto> handleInvalidProductRequestException(InvalidProductRequestException e) {
+        int status = HttpStatus.BAD_REQUEST.value();
+        ExceptionDto dto = createExceptionDto(status, e.getMessage());
+        return ResponseEntity
+                .status(status)
+                .body(dto);
+    }
+
+    @ExceptionHandler(CategoryAlreadyExistException.class)
+    public ResponseEntity<ExceptionDto> handleCategoryAlreadyExistExceptionException(CategoryAlreadyExistException e) {
         int status = HttpStatus.BAD_REQUEST.value();
         ExceptionDto dto = createExceptionDto(status, e.getMessage());
         return ResponseEntity
