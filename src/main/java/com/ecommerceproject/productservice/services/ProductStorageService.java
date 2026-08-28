@@ -182,6 +182,7 @@ public class ProductStorageService implements ProductService{
     }
 
     @Override
+    @Transactional
     public void deleteProductById(Long productId) {
 
         Product product = findProductById(productId);

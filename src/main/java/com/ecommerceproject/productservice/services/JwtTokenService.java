@@ -20,9 +20,8 @@ public class JwtTokenService implements TokenService{
     @Override
     public boolean validateToken(String token) {
         try {
-            Claims claims = extractClaims(token);
-            Long expiry = claims.get("exp", Long.class);
-            return expiry != null && expiry > System.currentTimeMillis();
+            extractClaims(token);
+            return true;
         } catch (JwtException | IllegalArgumentException e )  {
             return false;
         }
