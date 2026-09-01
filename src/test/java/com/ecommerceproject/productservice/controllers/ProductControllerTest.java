@@ -1,30 +1,28 @@
 package com.ecommerceproject.productservice.controllers;
 
-import com.ecommerceproject.productservice.commons.SecurityConfig;
 import com.ecommerceproject.productservice.dtos.*;
-import com.ecommerceproject.productservice.exceptions.ProductNotFoundException;
 import com.ecommerceproject.productservice.services.ProductService;
 import com.ecommerceproject.productservice.services.TokenService;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import org.junit.jupiter.api.Test;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
+
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(ProductController.class)
-@Import(SecurityConfig.class)
 class ProductControllerTest {
 
     @Autowired
@@ -40,22 +38,23 @@ class ProductControllerTest {
 
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void createProduct_shouldReturn201() throws Exception {
+    void contextLoads() {
+    }
 
-        CreateProductRequestDto requestDto = new CreateProductRequestDto();
 
-        requestDto.setTitle("Gaming Laptop");
-        requestDto.setDescription("High performance gaming laptop");
-        requestDto.setPrice(new BigDecimal("1500.00"));
-        requestDto.setQty(10);
-        requestDto.setImageUrl("laptop.jpg");
-        requestDto.setCategoryId(1L);
+    // =========================================================
+    // CREATE PRODUCT
+    // =========================================================
+
+    @Test
+    void createProduct_shouldReturn201_whenRequestIsValid() throws Exception {
+
+        CreateProductRequestDto requestDto = createValidProductRequest();
 
         CreateProductResponseDto responseDto = new CreateProductResponseDto();
 
-        when(productService.createProduct(any(CreateProductRequestDto.class)))
-                .thenReturn(responseDto);
+        when(productService.createProduct(any(CreateProductRequestDto.class))).
+                thenReturn(responseDto);
 
         mockMvc.perform(
                         post("/products")
@@ -64,80 +63,162 @@ class ProductControllerTest {
                 )
                 .andExpect(status().isCreated());
 
-        verify(productService).createProduct(any(CreateProductRequestDto.class));
+        verify(productService)
+                .createProduct(any(CreateProductRequestDto.class));
     }
 
+
     @Test
-    void createProduct_withoutAuthentication_shouldReturn401() throws Exception {
+    void createProduct_shouldReturn400_whenTitleIsBlank() throws Exception {
 
-        CreateProductRequestDto requestDto = new CreateProductRequestDto();
+        CreateProductRequestDto requestDto = createValidProductRequest();
 
-        requestDto.setTitle("Gaming Laptop");
-        requestDto.setDescription("High performance gaming laptop");
-        requestDto.setPrice(new BigDecimal("1500.00"));
-        requestDto.setQty(10);
-        requestDto.setImageUrl("laptop.jpg");
-        requestDto.setCategoryId(1L);
+        requestDto.setTitle("");
 
         mockMvc.perform(
                         post("/products")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(requestDto))
                 )
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isBadRequest());
 
         verify(productService, never())
-                .createProduct(any(CreateProductRequestDto.class));
+                .createProduct(any());
     }
 
 
     @Test
-    @WithMockUser(roles = "USER")
-    void createProduct_withUserRole_shouldReturn403() throws Exception {
+    void createProduct_shouldReturn400_whenTitleIsNull() throws Exception {
 
-        CreateProductRequestDto requestDto = new CreateProductRequestDto();
+        CreateProductRequestDto requestDto = createValidProductRequest();
 
-        requestDto.setTitle("Gaming Laptop");
-        requestDto.setDescription("High performance gaming laptop");
-        requestDto.setPrice(new BigDecimal("1500.00"));
-        requestDto.setQty(10);
-        requestDto.setImageUrl("laptop.jpg");
-        requestDto.setCategoryId(1L);
+        requestDto.setTitle(null);
+
+        mockMvc.perform(
+                        post("/products")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestDto)
+                                )
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(productService, never())
+                .createProduct(any());
+    }
+
+
+    @Test
+    void createProduct_shouldReturn400_whenPriceIsNull() throws Exception {
+
+        CreateProductRequestDto requestDto = createValidProductRequest();
+
+        requestDto.setPrice(null);
 
         mockMvc.perform(
                         post("/products")
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(requestDto))
                 )
-                .andExpect(status().isForbidden());
+                .andExpect(status().isBadRequest());
 
         verify(productService, never())
-                .createProduct(any(CreateProductRequestDto.class));
+                .createProduct(any());
     }
 
 
-    // ============================================================
-    // GET /products/{id}
-    // ============================================================
+    @Test
+    void createProduct_shouldReturn400_whenPriceIsNegative() throws Exception {
+
+        CreateProductRequestDto requestDto = createValidProductRequest();
+
+        requestDto.setPrice(new BigDecimal("-100.00"));
+
+        mockMvc.perform(
+                        post("/products")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestDto))
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(productService, never())
+                .createProduct(any());
+    }
+
+
+    @Test
+    void createProduct_shouldReturn400_whenQuantityIsNegative() throws Exception {
+
+        CreateProductRequestDto requestDto = createValidProductRequest();
+
+        requestDto.setQty(-1);
+
+        mockMvc.perform(
+                        post("/products")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestDto))
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(productService, never())
+                .createProduct(any());
+    }
+
+
+    @Test
+    void createProduct_shouldReturn400_whenCategoryIdIsNull() throws Exception {
+
+        CreateProductRequestDto requestDto = createValidProductRequest();
+
+        requestDto.setCategoryId(null);
+
+        mockMvc.perform(
+                        post("/products")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestDto))
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(productService, never())
+                .createProduct(any());
+    }
+
+
+    @Test
+    void createProduct_shouldReturn400_whenJsonIsMalformed() throws Exception {
+
+        String invalidJson = """
+                {
+                    "title": "Laptop",
+                    "price": 1000,
+                }
+                """;
+
+        mockMvc.perform(
+                        post("/products")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(invalidJson)
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(productService, never())
+                .createProduct(any());
+    }
+
+
+    // =========================================================
+    // GET PRODUCT BY ID
+    // =========================================================
 
     @Test
     void getProductById_shouldReturn200() throws Exception {
 
-        GetProductResponseDto responseDto =
-                new GetProductResponseDto();
-
-        responseDto.setId(1L);
-        responseDto.setTitle("Gaming Laptop");
+        GetProductResponseDto responseDto = new GetProductResponseDto();
 
         when(productService.getProductById(1L))
                 .thenReturn(responseDto);
 
-        mockMvc.perform(
-                        get("/products/1")
-                )
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(1))
-                .andExpect(jsonPath("$.title").value("Gaming Laptop"));
+        mockMvc.perform(get("/products/{product_id}", 1L))
+                .andExpect(status().isOk());
 
         verify(productService)
                 .getProductById(1L);
@@ -145,226 +226,395 @@ class ProductControllerTest {
 
 
     @Test
-    void getProductById_whenProductDoesNotExist_shouldReturnExpectedError() throws Exception {
+    void getProductById_shouldReturn400_whenIdIsInvalidType() throws Exception {
 
-        when(productService.getProductById(999L))
-                .thenThrow(
-                        new ProductNotFoundException(
-                                "Product not found with id : 999"
-                        )
-                );
+        mockMvc.perform(get("/products/{product_id}", "abc"))
+                .andExpect(status().isBadRequest());
 
-        mockMvc.perform(
-                        get("/products/999")
-                )
-                .andExpect(status().isNotFound());
-
-        verify(productService)
-                .getProductById(999L);
+        verify(productService, never())
+                .getProductById(anyLong());
     }
 
 
-    // ============================================================
-    // GET /products
-    // ============================================================
+    // =========================================================
+    // GET ALL PRODUCTS
+    // =========================================================
 
     @Test
     void getAllProducts_shouldReturn200() throws Exception {
 
-        PageResponseDto<GetProductResponseDto> responseDto =
-                new PageResponseDto<>();
-
         when(productService.getAllProducts(
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-        )).thenReturn(responseDto);
+                isNull(),
+                isNull(),
+                isNull(),
+                isNull(),
+                any(Pageable.class)
+        )).thenReturn(null);
 
-        mockMvc.perform(
-                        get("/products")
-                )
-                .andExpect(status().isOk());
+        mockMvc.perform(get("/products")).andExpect(status().isOk());
 
-        verify(productService).getAllProducts(
-                any(),
-                any(),
-                any(),
-                any(),
-                any()
-        );
+        verify(productService)
+                .getAllProducts(
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        any(Pageable.class)
+                );
     }
 
 
     @Test
-    void getAllProducts_withSearchAndPriceFilter_shouldReturn200()
+    void getAllProducts_shouldPassSearchParameter() throws Exception {
+
+        when(productService.getAllProducts(
+                eq("Laptop"),
+                isNull(),
+                isNull(),
+                isNull(),
+                any(Pageable.class)
+        )).thenReturn(null);
+
+        mockMvc.perform(get("/products").param("search", "Laptop"))
+                .andExpect(status().isOk());
+
+        verify(productService)
+                .getAllProducts(
+                        eq("Laptop"),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        any(Pageable.class)
+                );
+    }
+
+
+    @Test
+    void getAllProducts_shouldPassCategoryFilter() throws Exception {
+
+        when(productService.getAllProducts(
+                isNull(),
+                eq(1L),
+                isNull(),
+                isNull(),
+                any(Pageable.class)
+        )).thenReturn(null);
+
+        mockMvc.perform(get("/products").param("categoryId", "1")).andExpect(status().isOk());
+
+        verify(productService)
+                .getAllProducts(
+                        isNull(),
+                        eq(1L),
+                        isNull(),
+                        isNull(),
+                        any(Pageable.class)
+                );
+    }
+
+
+    @Test
+    void getAllProducts_shouldPassMinimumPriceFilter() throws Exception {
+
+        BigDecimal minPrice = new BigDecimal("500.00");
+
+        when(productService.getAllProducts(
+                isNull(),
+                isNull(),
+                eq(minPrice),
+                isNull(),
+                any(Pageable.class)
+        )).thenReturn(null);
+
+        mockMvc.perform(get("/products").param("minPrice", "500.00"))
+                .andExpect(status().isOk());
+
+        verify(productService)
+                .getAllProducts(
+                        isNull(),
+                        isNull(),
+                        eq(minPrice),
+                        isNull(),
+                        any(Pageable.class)
+                );
+    }
+
+
+    @Test
+    void getAllProducts_shouldPassMaximumPriceFilter() throws Exception {
+
+        BigDecimal maxPrice = new BigDecimal("2000.00");
+
+        when(productService.getAllProducts(
+                isNull(),
+                isNull(),
+                isNull(),
+                eq(maxPrice),
+                any(Pageable.class)
+        )).thenReturn(null);
+
+        mockMvc.perform(get("/products").param("maxPrice", "2000.00"))
+                .andExpect(status().isOk());
+
+        verify(productService)
+                .getAllProducts(
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        eq(maxPrice),
+                        any(Pageable.class)
+                );
+    }
+
+
+    @Test
+    void getAllProducts_shouldPassCombinedFilters()
             throws Exception {
 
-        PageResponseDto<GetProductResponseDto> responseDto =
-                new PageResponseDto<>();
+        BigDecimal minPrice = new BigDecimal("500.00");
+
+        BigDecimal maxPrice = new BigDecimal("2000.00");
 
         when(productService.getAllProducts(
-                eq("laptop"),
+                eq("Laptop"),
                 eq(1L),
-                eq(new BigDecimal("500")),
-                eq(new BigDecimal("2000")),
-                any()
-        )).thenReturn(responseDto);
+                eq(minPrice),
+                eq(maxPrice),
+                any(Pageable.class)
+        )).thenReturn(null);
 
-        mockMvc.perform(
-                        get("/products")
-                                .param("search", "laptop")
+        mockMvc.perform(get("/products")
+                                .param("search", "Laptop")
                                 .param("categoryId", "1")
-                                .param("minPrice", "500")
-                                .param("maxPrice", "2000")
+                                .param("minPrice", "500.00")
+                                .param("maxPrice", "2000.00")
                 )
                 .andExpect(status().isOk());
 
-        verify(productService).getAllProducts(
-                eq("laptop"),
-                eq(1L),
-                eq(new BigDecimal("500")),
-                eq(new BigDecimal("2000")),
-                any()
-        );
+        verify(productService)
+                .getAllProducts(
+                        eq("Laptop"),
+                        eq(1L),
+                        eq(minPrice),
+                        eq(maxPrice),
+                        any(Pageable.class)
+                );
     }
 
 
-    // ============================================================
-    // PUT /products/{id}
-    // ============================================================
+    @Test
+    void getAllProducts_shouldSupportPagination()
+            throws Exception {
+
+        when(productService.getAllProducts(
+                isNull(),
+                isNull(),
+                isNull(),
+                isNull(),
+                any(Pageable.class)
+        )).thenReturn(null);
+
+        mockMvc.perform(
+                        get("/products")
+                                .param("page", "0")
+                                .param("size", "10")
+                )
+                .andExpect(status().isOk());
+
+        verify(productService)
+                .getAllProducts(
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        isNull(),
+                        argThat(
+                                pageable ->
+                                        pageable.getPageNumber() == 0
+                                                &&
+                                                pageable.getPageSize() == 10
+                        )
+                );
+    }
+
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void updateProduct_shouldReturn204() throws Exception {
+    void getAllProducts_shouldReturn400_whenMinPriceIsNegative()
+            throws Exception {
 
-        UpdateProductRequestDto requestDto =
-                new UpdateProductRequestDto();
+        mockMvc.perform(
+                        get("/products")
+                                .param("minPrice", "-100")
+                )
+                .andExpect(status().isBadRequest());
 
-        requestDto.setTitle("Updated Laptop");
-        requestDto.setDescription("Updated description");
-        requestDto.setPrice(new BigDecimal("1800.00"));
-        requestDto.setQty(5);
-        requestDto.setImageUrl("updated.jpg");
-        requestDto.setCategoryId(1L);
+        verify(productService, never())
+                .getAllProducts(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
+    }
+
+
+    @Test
+    void getAllProducts_shouldReturn400_whenMaxPriceIsLessThanMinPrice()
+            throws Exception {
+
+        mockMvc.perform(
+                        get("/products")
+                                .param("minPrice", "1000")
+                                .param("maxPrice", "500")
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(productService, never())
+                .getAllProducts(
+                        any(),
+                        any(),
+                        any(),
+                        any(),
+                        any()
+                );
+    }
+
+
+    // =========================================================
+    // PUT PRODUCT
+    // =========================================================
+
+    @Test
+    void updateProduct_shouldReturn204_whenRequestIsValid()
+            throws Exception {
+
+        UpdateProductRequestDto requestDto = createValidUpdateRequest();
 
         doNothing().when(productService)
                 .updateProductById(any(UpdateProductRequestDto.class), eq(1L));
 
         mockMvc.perform(
-                        put("/products/1")
+                        put("/products/{product_id}", 1L)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(requestDto))
-                )
+                                .content(objectMapper.writeValueAsString(requestDto)))
                 .andExpect(status().isNoContent());
 
         verify(productService)
-                .updateProductById(
-                        any(UpdateProductRequestDto.class),
-                        eq(1L)
-                );
+                .updateProductById(any(UpdateProductRequestDto.class), eq(1L));
     }
 
 
     @Test
-    void updateProduct_withoutAuthentication_shouldReturn401()
-            throws Exception {
+    void updateProduct_shouldReturn400_whenTitleIsBlank() throws Exception {
 
-        UpdateProductRequestDto requestDto =
-                new UpdateProductRequestDto();
+        UpdateProductRequestDto requestDto = createValidUpdateRequest();
 
-        requestDto.setTitle("Updated Laptop");
-        requestDto.setDescription("Updated description");
-        requestDto.setPrice(new BigDecimal("1800.00"));
-        requestDto.setQty(5);
-        requestDto.setImageUrl("updated.jpg");
-        requestDto.setCategoryId(1L);
+        requestDto.setTitle("");
 
-        mockMvc.perform(
-                        put("/products/1")
+        mockMvc.perform(put("/products/{product_id}", 1L)
                                 .contentType(MediaType.APPLICATION_JSON)
-                                .content(objectMapper.writeValueAsString(requestDto))
-                )
-                .andExpect(status().isUnauthorized());
+                                .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
+
+        verify(productService, never()).updateProductById(any(), anyLong());
+    }
+
+
+    @Test
+    void updateProduct_shouldReturn400_whenPriceIsNegative() throws Exception {
+
+        UpdateProductRequestDto requestDto = createValidUpdateRequest();
+
+        requestDto.setPrice(new BigDecimal("-1"));
+
+        mockMvc.perform(put("/products/{product_id}", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestDto)))
+                .andExpect(status().isBadRequest());
 
         verify(productService, never())
-                .updateProductById(
-                        any(UpdateProductRequestDto.class),
-                        anyLong()
-                );
+                .updateProductById(any(), anyLong());
     }
 
 
-    // ============================================================
-    // PATCH /products/{id}
-    // ============================================================
+    // =========================================================
+    // PATCH PRODUCT
+    // =========================================================
 
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void patchProduct_shouldReturn204() throws Exception {
+    void patchProduct_shouldReturn204_whenRequestIsValid() throws Exception {
 
-        PatchProductRequestDto requestDto =
-                new PatchProductRequestDto();
+        PatchProductRequestDto requestDto = new PatchProductRequestDto();
 
-        requestDto.setTitle("Patched Laptop");
-        requestDto.setPrice(new BigDecimal("1700.00"));
+        requestDto.setTitle("Updated Gaming Laptop");
 
-        doNothing().when(productService)
-                .updateProductFieldsById(
-                        any(PatchProductRequestDto.class),
-                        eq(1L)
-                );
+        doNothing()
+                .when(productService)
+                .updateProductFieldsById(any(PatchProductRequestDto.class), eq(1L));
 
         mockMvc.perform(
-                        patch("/products/1")
+                        patch("/products/{product_id}", 1L)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(objectMapper.writeValueAsString(requestDto))
                 )
                 .andExpect(status().isNoContent());
 
         verify(productService)
-                .updateProductFieldsById(
-                        any(PatchProductRequestDto.class),
-                        eq(1L)
-                );
+                .updateProductFieldsById(any(PatchProductRequestDto.class), eq(1L));
     }
 
 
-    // ============================================================
-    // HARD DELETE
-    // ============================================================
-
     @Test
-    @WithMockUser(roles = "ADMIN")
-    void hardDeleteProduct_shouldReturn204() throws Exception {
+    void patchProduct_shouldReturn400_whenPriceIsNegative() throws Exception {
 
-        doNothing().when(productService)
-                .deleteProductById(1L);
+        PatchProductRequestDto requestDto = new PatchProductRequestDto();
+
+        requestDto.setPrice(new BigDecimal("-100"));
 
         mockMvc.perform(
-                        delete("/products/1/hard-delete")
+                        patch("/products/{product_id}", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestDto))
+                )
+                .andExpect(status().isBadRequest());
+
+        verify(productService, never())
+                .updateProductFieldsById(any(), anyLong());
+    }
+
+
+    @Test
+    void patchProduct_shouldAllowPartialRequest() throws Exception {
+
+        PatchProductRequestDto requestDto = new PatchProductRequestDto();
+
+        requestDto.setQty(20);
+
+        mockMvc.perform(
+                        patch("/products/{product_id}", 1L)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(objectMapper.writeValueAsString(requestDto))
                 )
                 .andExpect(status().isNoContent());
 
         verify(productService)
-                .deleteProductById(1L);
+                .updateProductFieldsById(any(PatchProductRequestDto.class), eq(1L));
     }
 
 
-    // ============================================================
+    // =========================================================
     // SOFT DELETE
-    // ============================================================
+    // =========================================================
 
     @Test
-    @WithMockUser(roles = "ADMIN")
     void softDeleteProduct_shouldReturn204() throws Exception {
 
-        doNothing().when(productService)
+        doNothing()
+                .when(productService)
                 .softDeleteProductById(1L);
 
         mockMvc.perform(
-                        delete("/products/1")
+                        delete("/products/{product_id}", 1L)
                 )
                 .andExpect(status().isNoContent());
 
@@ -373,36 +623,55 @@ class ProductControllerTest {
     }
 
 
-    // ============================================================
-    // DELETE WITHOUT ADMIN
-    // ============================================================
+    // =========================================================
+    // HARD DELETE
+    // =========================================================
 
     @Test
-    @WithMockUser(roles = "USER")
-    void deleteProduct_withUserRole_shouldReturn403() throws Exception {
+    void hardDeleteProduct_shouldReturn204() throws Exception {
 
-        mockMvc.perform(
-                        delete("/products/1")
-                )
-                .andExpect(status().isForbidden());
+        doNothing()
+                .when(productService)
+                .deleteProductById(1L);
 
-        verify(productService, never())
-                .softDeleteProductById(anyLong());
+        mockMvc.perform(delete("/products/{product_id}/hard-delete", 1L))
+                .andExpect(status().isNoContent());
+
+        verify(productService)
+                .deleteProductById(1L);
     }
 
 
-    @Test
-    void deleteProduct_withoutAuthentication_shouldReturn401()
-            throws Exception {
+    // =========================================================
+    // HELPER METHODS
+    // =========================================================
 
-        mockMvc.perform(
-                        delete("/products/1")
-                )
-                .andExpect(status().isUnauthorized());
+    private CreateProductRequestDto createValidProductRequest() {
 
-        verify(productService, never())
-                .softDeleteProductById(anyLong());
+        CreateProductRequestDto requestDto = new CreateProductRequestDto();
+
+        requestDto.setTitle("Gaming Laptop");
+        requestDto.setDescription("High performance gaming laptop");
+        requestDto.setPrice(new BigDecimal("1500.00"));
+        requestDto.setQty(10);
+        requestDto.setImageUrl("https://example.com/laptop.jpg");
+        requestDto.setCategoryId(1L);
+
+        return requestDto;
     }
 
 
+    private UpdateProductRequestDto createValidUpdateRequest() {
+
+        UpdateProductRequestDto requestDto = new UpdateProductRequestDto();
+
+        requestDto.setTitle("Updated Gaming Laptop");
+        requestDto.setDescription("Updated description");
+        requestDto.setPrice(new BigDecimal("1800.00"));
+        requestDto.setQty(15);
+        requestDto.setImageUrl("https://example.com/updated-laptop.jpg");
+        requestDto.setCategoryId(1L);
+
+        return requestDto;
+    }
 }

@@ -23,6 +23,7 @@ public class SecurityConfig {
                             .requestMatchers(HttpMethod.PUT, "/products/**").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.PATCH, "/products/**").hasRole("ADMIN")
                             .requestMatchers(HttpMethod.DELETE, "/products/**").hasRole("ADMIN")
+                            .requestMatchers(HttpMethod.POST, "/category").hasRole("ADMIN")
                             .anyRequest().permitAll()
                     )
                     .exceptionHandling(exception ->
